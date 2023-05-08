@@ -1,4 +1,4 @@
-# Sardine VSCode: an extension to connet VSCode to Sardine
+# Sardine VSCode extension
 
 This is a Visual Studio Code extension for [Sardine](https://sardine.raphaelforment.fr). This extension is largely based on [vscode-foxdot](https://github.com/yasuyuky/vscode-foxdot). The extension is capable of:
 - starting `fishery`, the Sardine interpreter.
