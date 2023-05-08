@@ -1,0 +1,95 @@
+{
+  "name": "vscode-sardine",
+  "displayName": "Sardine",
+  "publisher": "BuboBubo",
+  "description": "Extension for Sardine",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.78.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "images/sardine_logo.png",
+  "activationEvents": [
+    "onCommand:sardine.start"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bubobubobubobubo/sardine-vscode"
+  },
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sardine.start",
+        "title": "Sardine: Start"
+      },
+      {
+        "command": "sardine.stop",
+        "title": "Sardine: Stop"
+      },
+      {
+        "command": "sardine.send",
+        "title": "Sardine: Send"
+      },
+      {
+        "command": "sardine.sendSelections",
+        "title": "Sardine: Send Selection"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "cmd+enter",
+        "command": "sardine.send",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Sardine",
+        "properties": {
+          "foxdot.pythonPath": {
+            "type": "string",
+            "default": null,
+            "description": "Python Path with Sardine installed (Optional)"
+          },
+          "foxdot.venvPath": {
+            "type": "string",
+            "default": null,
+            "description": "Virtual Environment Path for Sardine (Optional)"
+          },
+          "foxdot.feedbackStyle": {
+            "type": "string",
+            "default": "outputChannel",
+            "enum": [
+              "outputChannel",
+              "infomationMessage"
+            ],
+            "enumDescriptions": [
+              "Use output channel to feedback Sardine output",
+              "Use infomation message to feedback Sardine output"
+            ],
+            "description": "Feedback style of Sardine output"
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/mocha": "10.0.1",
+    "@types/node": "20.1.0",
+    "@types/vscode": "1.78.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.2",
+    "@typescript-eslint/parser": "^5.59.2",
+    "eslint": "^8.40.0",
+    "typescript": "5.0.4",
+    "vscode-test": "1.6.1"
+  }
+}
