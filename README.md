@@ -19,3 +19,7 @@ You will need to install [Sardine](https://sardine.raphaelforment.fr) in order t
 ## Settings
 
 TODO
+
+## Credits
+
+- Yasuyuki YAMADA for the [original FoxDot extension](https://github.com/yasuyuky/vscode-foxdot)
