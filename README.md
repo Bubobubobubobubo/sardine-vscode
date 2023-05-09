@@ -9,6 +9,8 @@ This is a Visual Studio Code extension for [Sardine](https://sardine.raphaelform
 
 - `sardine.start`: automatically run whenever you eval a line for the first time. 
 - `sardine.stop`: killing the interpreter subprocess.
+- `sardine.silence`: Sardine silence function.
+- `sardine.panic`: Sardine panic function.
 - `sardine.send`: sending line to the interpreter.
 - `sardine.send_selection`: sending lines to the interpreter.
 

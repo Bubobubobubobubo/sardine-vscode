@@ -26,6 +26,14 @@
         "title": "Sardine: Start"
       },
       {
+        "command": "sardine.silence",
+        "title": "Sardine: Silence"
+      },
+      {
+        "command": "sardine.panic",
+        "title": "Sardine: Panic"
+      },
+      {
         "command": "sardine.stop",
         "title": "Sardine: Stop"
       },

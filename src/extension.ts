@@ -26,6 +26,8 @@ export function activate(context: vscode.ExtensionContext) {
   let commands = new Map<string, (...args: any[]) => any>([
     ["sardine.start", start],
     ["sardine.send", send],
+    ["sardine.silence", silence],
+    ["sardine.panic", panic],
     ["sardine.sendSelections", sendSelections],
     ["sardine.stop", stop],
   ]);
@@ -41,6 +43,14 @@ function startProcess(command: string) {
   sardineProc.stdout?.on("data", handleOutputData);
   sardineProc.stderr?.on("data", handleErrorData);
   sardineProc.on("close", handleOnClose);
+}
+
+function silence(){
+  sardineProc.stdin?.write("silence()\n\n");
+}
+
+function panic(){
+  sardineProc.stdin?.write("panic()\n\n");
 }
 
 function setupStatus() {
