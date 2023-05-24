@@ -3,9 +3,9 @@
   "displayName": "Sardine",
   "publisher": "BuboBubo",
   "description": "Extension for Sardine",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "engines": {
-    "vscode": "^1.78.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
@@ -93,7 +93,7 @@
   "devDependencies": {
     "@types/mocha": "10.0.1",
     "@types/node": "20.1.0",
-    "@types/vscode": "1.78.0",
+    "@types/vscode": "1.74.0",
     "@typescript-eslint/eslint-plugin": "^5.59.2",
     "@typescript-eslint/parser": "^5.59.2",
     "eslint": "^8.40.0",

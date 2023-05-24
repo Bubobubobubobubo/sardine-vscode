@@ -74,7 +74,7 @@ function setOutputHook(key: string, handler: (_: string) => any) {
 const sleep = (msec: number) => util.promisify(setTimeout)(msec);
 
 function findSardine(): string {
-  return "fishery"
+  return "sardine"
 }
 
 // function selectPython(config: vscode.WorkspaceConfiguration): string {
