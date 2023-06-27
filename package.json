@@ -57,17 +57,17 @@
       {
         "title": "Sardine",
         "properties": {
-          "foxdot.pythonPath": {
+          "sardine.pythonPath": {
             "type": "string",
             "default": null,
             "description": "Python Path with Sardine installed (Optional)"
           },
-          "foxdot.venvPath": {
+          "sardine.venvPath": {
             "type": "string",
             "default": null,
             "description": "Virtual Environment Path for Sardine (Optional)"
           },
-          "foxdot.feedbackStyle": {
+          "sardine.feedbackStyle": {
             "type": "string",
             "default": "outputChannel",
             "enum": [
