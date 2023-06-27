@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function startProcess(command: string) {
-  sardineProc = spawn(command, []);
+  sardineProc = spawn(command, [], {env:{ PYTHONIOENCODING: "utf-8" }});
   sardineProc.stdout?.on("data", handleOutputData);
   sardineProc.stderr?.on("data", handleErrorData);
   sardineProc.on("close", handleOnClose);
@@ -74,6 +74,8 @@ function setOutputHook(key: string, handler: (_: string) => any) {
 const sleep = (msec: number) => util.promisify(setTimeout)(msec);
 
 function findSardine(): string {
+  let customPath = vscode.workspace.getConfiguration("sardine").get<string>("pythonPath") || "";
+  if (customPath) return customPath + "/sardine";
   return "sardine"
 }
 
@@ -117,7 +119,7 @@ function handleOutputData(data: any) {
 }
 
 function handleErrorData(data: any) {
-  vscode.window.showErrorMessage(data.toString());
+  printFeedback(data.toString());
 }
 
 function handleOnClose(code: number) {
