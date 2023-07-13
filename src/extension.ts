@@ -7,9 +7,24 @@ import {
   OutputChannel,
 } from "vscode";
 import { spawn, ChildProcess } from "child_process";
-import { existsSync } from "fs";
-import * as path from "path";
 import * as util from "util";
+
+const ansiRegex = ({onlyFirst = false} = {}) => {
+	const pattern = [
+		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
+	].join('|');
+	return new RegExp(pattern, onlyFirst ? undefined : 'g');
+};
+
+const stripAnsi = (expression: string ) => {
+  if (typeof expression !== 'string') {
+    throw new TypeError(`Expected a \`string\`, got \`${typeof expression}\``);
+
+  }
+  const regex = ansiRegex();
+  return expression.replace(regex, '');
+};
 
 enum FeedbackStyle {
   outputChannel,
@@ -39,7 +54,16 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function startProcess(command: string) {
-  sardineProc = spawn(command, [], {env:{ PYTHONIOENCODING: "utf-8" }});
+  sardineProc = spawn(command, [], {
+    env: { 
+      PYTHONIOENCODING: "utf-8",
+      sclang: vscode.workspace.getConfiguration("sardine").get<string>("sclangPath") || "sclang",
+    }
+  });
+  if (!sardineProc || sardineProc.killed) {
+    vscode.window.showErrorMessage("Sardine process unavailable.");
+    return;
+  }
   sardineProc.stdout?.on("data", handleOutputData);
   sardineProc.stderr?.on("data", handleErrorData);
   sardineProc.on("close", handleOnClose);
@@ -73,10 +97,10 @@ function setOutputHook(key: string, handler: (_: string) => any) {
 
 const sleep = (msec: number) => util.promisify(setTimeout)(msec);
 
-function findSardine(): string {
+function findSardine(): string {
   let customPath = vscode.workspace.getConfiguration("sardine").get<string>("pythonPath") || "";
   if (customPath) return customPath + "/sardine";
-  return "sardine"
+  return "sardine";
 }
 
 // function selectPython(config: vscode.WorkspaceConfiguration): string {
@@ -103,12 +127,14 @@ function start(editor: TextEditor) {
 }
 
 function printFeedback(s: string) {
+  const strippedString = stripAnsi(s);
   switch (feedbackStyle) {
     case FeedbackStyle.infomationMessage:
-      vscode.window.showInformationMessage(s);
+      vscode.window.showInformationMessage(strippedString);
       break;
     default:
-      sardineOutput.appendLine(s);
+      sardineOutput.appendLine(strippedString);
+      break;
   }
 }
 
