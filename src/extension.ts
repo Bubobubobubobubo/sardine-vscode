@@ -56,6 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
 function startProcess(command: string) {
   sardineProc = spawn(command, [], {
     env: { 
+      ...process.env,
       PYTHONIOENCODING: "utf-8",
       sclang: vscode.workspace.getConfiguration("sardine").get<string>("sclangPath") || "sclang",
     }
@@ -79,7 +80,7 @@ function panic(){
 
 function setupStatus() {
   sardineStatus = vscode.window.createStatusBarItem(StatusBarAlignment.Left, 10);
-  sardineStatus.text = "Sardine >>";
+  sardineStatus.text = "Sardine";
   sardineStatus.show();
 }
 
@@ -122,11 +123,12 @@ function start(editor: TextEditor) {
   vscode.languages.setTextDocumentLanguage(editor.document, "python");
   feedbackStyle = config.get("feedbackStyle") || FeedbackStyle.outputChannel;
   let pythonPath = findSardine();
-  vscode.window.showInformationMessage("Using: " + pythonPath);
+  // vscode.window.showInformationMessage("Using: " + pythonPath);
   startProcess(pythonPath);
   setupStatus();
   setupOutput();
-  vscode.window.showInformationMessage("Sardine has started!");
+  vscode.window.showInformationMessage(
+    `Sardine has started with: ${vscode.workspace.getConfiguration("sardine").get<string>("pythonPath") || "defaultPath"}`);
 }
 
 function printFeedback(s: string) {
