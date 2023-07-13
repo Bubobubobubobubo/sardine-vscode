@@ -99,7 +99,10 @@ const sleep = (msec: number) => util.promisify(setTimeout)(msec);
 
 function findSardine(): string {
   let customPath = vscode.workspace.getConfiguration("sardine").get<string>("pythonPath") || "";
-  if (customPath) return customPath + "/sardine";
+  if (customPath) {
+    if (customPath.endsWith("/sardine")) return customPath;
+    else return customPath + "/sardine";
+  }
   return "sardine";
 }
 
