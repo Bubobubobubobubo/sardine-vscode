@@ -3,7 +3,7 @@
   "displayName": "Sardine",
   "publisher": "BuboBubo",
   "description": "Extension for Sardine",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -54,20 +54,20 @@
       {
         "title": "Sardine",
         "properties": {
-          "sardine.pythonPath": {
+          "sardine.sardinePath": {
             "type": "string",
             "default": null,
-            "description": "Python Path with Sardine installed (Optional)"
+            "description": "Path where Sardine is currently installed (mandatory)"
           },
           "sardine.sclangPath": {
             "type": "string",
             "default": "sclang",
-            "description": "SuperCollider SCLang path (mandatory)"
+            "description": "SuperCollider SCLang path (optional)"
           },
           "sardine.venvPath": {
             "type": "string",
             "default": null,
-            "description": "Virtual Environment Path for Sardine (Optional)"
+            "description": "Virtual Environment Path for Sardine (optional)"
           },
           "sardine.feedbackStyle": {
             "type": "string",

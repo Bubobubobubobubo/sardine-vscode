@@ -8,6 +8,7 @@ import {
 } from "vscode";
 import { spawn, ChildProcess } from "child_process";
 import * as util from "util";
+import * as child_process from 'child_process';
 
 const ansiRegex = ({onlyFirst = false} = {}) => {
 	const pattern = [
@@ -61,10 +62,9 @@ function startProcess(command: string) {
       sclang: vscode.workspace.getConfiguration("sardine").get<string>("sclangPath") || "sclang",
     }
   });
-  if (!sardineProc || sardineProc.killed) {
-    vscode.window.showErrorMessage("Sardine process unavailable.");
-    return;
-  }
+  sardineProc.on("error", (err) => {
+    vscode.window.showErrorMessage(`Sardine error: ${err.message}`);
+  });
   sardineProc.stdout?.on("data", handleOutputData);
   sardineProc.stderr?.on("data", handleErrorData);
   sardineProc.on("close", handleOnClose);
@@ -98,37 +98,52 @@ function setOutputHook(key: string, handler: (_: string) => any) {
 
 const sleep = (msec: number) => util.promisify(setTimeout)(msec);
 
-function findSardine(): string {
-  let customPath = vscode.workspace.getConfiguration("sardine").get<string>("pythonPath") || "";
-  if (customPath) {
-    if (customPath.endsWith("/sardine")) return customPath;
-    else return customPath + "/sardine";
+function appendSardinePath(path: string): string {
+  if (path.endsWith("/sardine")) {
+    return path;
+  } else {
+    return path + "/sardine";
   }
-  return "sardine";
 }
 
-// function selectPython(config: vscode.WorkspaceConfiguration): string {
-//   let rootPath = vscode.workspace.rootPath || "";
-//   let venvPath = path.join(rootPath, config.get<string>("venvPath") || "");
-//   let venvPython = path.join(venvPath, "bin", "python");
-//   let directPath = config.get<string>("pythonPath") || "";
-//   if (venvPath && existsSync(venvPython)) return venvPython;
-//   else if (directPath) return directPath;
-//   return "python";
-// }
+function findSardine(): string | undefined {
+  const config = vscode.workspace.getConfiguration("sardine");
+  const sardinePath = config.get<string>('sardinePath');
+
+  if (sardinePath) {
+    return appendSardinePath(sardinePath);
+  }
+
+  if (process.platform === "linux" || process.platform === "darwin") {
+    try {
+      const whichSardine = child_process.execSync("which sardine").toString().trim();
+      if (whichSardine) {
+        return whichSardine;
+      }
+    } catch (error) {
+      if (sardinePath) return appendSardinePath(sardinePath);
+    }
+  }
+  vscode.window.showErrorMessage("Please enter a valid Sardine Path in configuration and restart VSCode");
+  return undefined;
+}
 
 function start(editor: TextEditor) {
   if (sardineProc && !sardineProc.killed) return;
   let config = vscode.workspace.getConfiguration("sardine");
   vscode.languages.setTextDocumentLanguage(editor.document, "python");
   feedbackStyle = config.get("feedbackStyle") || FeedbackStyle.outputChannel;
-  let pythonPath = findSardine();
-  // vscode.window.showInformationMessage("Using: " + pythonPath);
-  startProcess(pythonPath);
+  let sardinePath = findSardine();
+  if (!sardinePath) {
+    vscode.window.showInformationMessage(
+    `Can't start without Sardine path.`);
+    return
+  }
+  startProcess(sardinePath);
   setupStatus();
   setupOutput();
   vscode.window.showInformationMessage(
-    `Sardine has started with: ${vscode.workspace.getConfiguration("sardine").get<string>("pythonPath") || "defaultPath"}`);
+    `Sardine has started with: ${sardinePath}`);
 }
 
 function printFeedback(s: string) {
@@ -154,8 +169,11 @@ function handleErrorData(data: any) {
 }
 
 function handleOnClose(code: number) {
-  if (code) vscode.window.showErrorMessage(`Sardine has exited: ${code}.`);
-  else vscode.window.showInformationMessage(`Sardine has stopped.`);
+  if (code !== 0) {
+    vscode.window.showErrorMessage(`Sardine has exited: ${code}.`);
+  } else {
+    vscode.window.showInformationMessage(`Sardine has stopped.`);
+  }
   sardineStatus?.dispose();
 }
 
@@ -181,11 +199,48 @@ function send(editor: TextEditor) {
 }
 
 function sendSelections(editor: TextEditor) {
+  const decorationType = vscode.window.createTextEditorDecorationType({
+      backgroundColor: "rgba(255, 255, 0, 0.3)",
+      isWholeLine: false,
+      light: {
+        backgroundColor: "rgba(255, 255, 0, 0.3)",
+      },
+      dark: {
+        backgroundColor: "rgba(255, 255, 0, 0.3)",
+      },
+  });
+
   for (const s of editor.selections) {
     let t = editor.document.getText(s);
     printFeedback(">>> " + t);
     sardineProc.stdin?.write(t + "\n\n");
+
+    // Add decoration
+    const decoration = {
+      range: s,
+      renderOptions: {
+        backgroundColor: "rgba(255, 255, 0, 0.3)",
+        isWholeLine: false,
+        before: {
+          contentText: " ",
+          backgroundColor: "rgba(255, 255, 0, 0.3)",
+          border: "2px solid rgba(255, 255, 0, 0.8)",
+          borderRadius: "5px",
+          margin: "0 3px",
+          width: "10px",
+          height: "10px",
+          animation: "blinking 1s ease-in-out infinite",
+        },
+      },
+    };
+    editor.setDecorations(decorationType, [decoration]);
   }
+
+  setTimeout(() => {
+    editor.setDecorations(decorationType, []);
+  }, 400);
+
+
   editor.selections = editor.selections.map(
     (s) => new Selection(s.active, s.active)
   );
