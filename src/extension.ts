@@ -71,11 +71,11 @@ function startProcess(command: string) {
 }
 
 function silence(){
-  sardineProc.stdin?.write("silence()\n\n");
+  sardineProc.stdin!.write("silence()\n\n");
 }
 
 function panic(){
-  sardineProc.stdin?.write("panic()\n\n");
+  sardineProc.stdin!.write("panic()\n\n");
 }
 
 function setupStatus() {
@@ -201,55 +201,14 @@ function send(editor: TextEditor) {
 }
 
 function sendSelections(editor: TextEditor) {
-  const decorationType = vscode.window.createTextEditorDecorationType({
-      backgroundColor: "rgba(255, 255, 0, 0.3)",
-      isWholeLine: false,
-      light: {
-        backgroundColor: "rgba(255, 255, 0, 0.3)",
-      },
-      dark: {
-        backgroundColor: "rgba(255, 255, 0, 0.3)",
-      },
-  });
-
   for (const s of editor.selections) {
     let t = editor.document.getText(s);
     printFeedback(">>> " + t);
     sardineProc.stdin?.write(t + "\n\n");
-
-    // Add decoration
-    const decoration = {
-      range: s,
-      renderOptions: {
-        backgroundColor: "rgba(255, 255, 0, 0.3)",
-        isWholeLine: false,
-        before: {
-          contentText: " ",
-          backgroundColor: "rgba(255, 255, 0, 0.3)",
-          border: "2px solid rgba(255, 255, 0, 0.8)",
-          borderRadius: "5px",
-          margin: "0 3px",
-          width: "10px",
-          height: "10px",
-          animation: "blinking 1s ease-in-out infinite",
-        },
-      },
-    };
-    editor.setDecorations(decorationType, [decoration]);
   }
-
-  setTimeout(() => {
-    editor.setDecorations(decorationType, []);
-  }, 400);
-
-
-  editor.selections = editor.selections.map(
+    editor.selections = editor.selections.map(
     (s) => new Selection(s.active, s.active)
   );
-}
-
-export function deactivate() {
-  stop();
 }
 
 vscode.commands.registerCommand("extension.openSardineDocs", () => {

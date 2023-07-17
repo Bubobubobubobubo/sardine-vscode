@@ -28,25 +28,11 @@
       },
       {
         "command": "sardine.silence",
-        "title": "Sardine: Silence",
-        "keybindings": [
-          {
-            "key": "ctrl+alt+s",
-            "mac": "cmd+alt+s",
-            "when": "editorTextFocus"
-          }
-        ]
+        "title": "Sardine: Silence"
       },
       {
         "command": "sardine.panic",
-        "title": "Sardine: Panic",
-        "keybindings": [
-          {
-            "key": "ctrl+alt+p",
-            "mac": "cmd+alt+p",
-            "when": "editorTextFocus"
-          }
-        ]
+        "title": "Sardine: Panic"
       },
       {
         "command": "sardine.stop",
@@ -54,29 +40,27 @@
       },
       {
         "command": "sardine.send",
-        "title": "Sardine: Send",
-        "keybindings": [
-          {
-            "key": "shift+enter",
-            "when": "editorTextFocus && (isMacintosh ? cmd+enter : ctrl+enter)"
-          }
-        ]
+        "title": "Sardine: Send"
       },
       {
         "command": "sardine.sendSelections",
-        "title": "Sardine: Send Selection",
-        "keybindings": [
-          {
-            "key": "shift+ctrl+enter",
-            "when": "editorTextFocus && ctrl+shift+enter"
-          }
-        ]
+        "title": "Sardine: Send Selection"
       }
     ],
     "keybindings": [
       {
         "key": "cmd+enter",
         "command": "sardine.send",
+        "when": "editorTextFocus"
+      },
+      {
+        "key": "cmd+escape",
+        "command": "sardine.panic",
+        "when": "editorTextFocus"
+      },
+      {
+        "key": "shift+cmd+backspace",
+        "command": "sardine.silence",
         "when": "editorTextFocus"
       }
     ],
