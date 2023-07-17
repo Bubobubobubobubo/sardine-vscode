@@ -80,7 +80,9 @@ function panic(){
 
 function setupStatus() {
   sardineStatus = vscode.window.createStatusBarItem(StatusBarAlignment.Left, 10);
-  sardineStatus.text = "Sardine";
+  sardineStatus.text = "$(triangle-right) Sardine";
+  sardineStatus.tooltip = "Click to open Sardine documentation";
+  sardineStatus.command = "extension.openSardineDocs";
   sardineStatus.show();
 }
 
@@ -249,3 +251,7 @@ function sendSelections(editor: TextEditor) {
 export function deactivate() {
   stop();
 }
+
+vscode.commands.registerCommand("extension.openSardineDocs", () => {
+  vscode.env.openExternal(vscode.Uri.parse("https://sardine.raphaelforment.fr"));
+});
