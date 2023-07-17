@@ -28,11 +28,25 @@
       },
       {
         "command": "sardine.silence",
-        "title": "Sardine: Silence"
+        "title": "Sardine: Silence",
+        "keybindings": [
+          {
+            "key": "ctrl+alt+s",
+            "mac": "cmd+alt+s",
+            "when": "editorTextFocus"
+          }
+        ]
       },
       {
         "command": "sardine.panic",
-        "title": "Sardine: Panic"
+        "title": "Sardine: Panic",
+        "keybindings": [
+          {
+            "key": "ctrl+alt+p",
+            "mac": "cmd+alt+p",
+            "when": "editorTextFocus"
+          }
+        ]
       },
       {
         "command": "sardine.stop",
@@ -40,11 +54,23 @@
       },
       {
         "command": "sardine.send",
-        "title": "Sardine: Send"
+        "title": "Sardine: Send",
+        "keybindings": [
+          {
+            "key": "shift+enter",
+            "when": "editorTextFocus && (isMacintosh ? cmd+enter : ctrl+enter)"
+          }
+        ]
       },
       {
         "command": "sardine.sendSelections",
-        "title": "Sardine: Send Selection"
+        "title": "Sardine: Send Selection",
+        "keybindings": [
+          {
+            "key": "shift+ctrl+enter",
+            "when": "editorTextFocus && ctrl+shift+enter"
+          }
+        ]
       }
     ],
     "keybindings": [
