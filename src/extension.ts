@@ -130,22 +130,48 @@ function findSardine(): string | undefined {
   return undefined;
 }
 
-function start(editor: TextEditor) {
-  if (sardineProc && !sardineProc.killed) return;
-  let config = vscode.workspace.getConfiguration("sardine");
-  vscode.languages.setTextDocumentLanguage(editor.document, "python");
-  feedbackStyle = config.get("feedbackStyle") || FeedbackStyle.outputChannel;
-  let sardinePath = findSardine();
-  if (!sardinePath) {
-    vscode.window.showInformationMessage(
-    `Can't start without Sardine path.`);
-    return
-  }
-  startProcess(sardinePath);
-  setupStatus();
-  setupOutput();
-  vscode.window.showInformationMessage(
-    `Sardine has started with: ${sardinePath}`);
+function start(editor: TextEditor): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (sardineProc && !sardineProc.killed) {
+                resolve();
+                return;
+            }
+
+            let config = vscode.workspace.getConfiguration("sardine");
+            vscode.languages.setTextDocumentLanguage(editor.document, "python");
+            feedbackStyle = config.get("feedbackStyle") || FeedbackStyle.outputChannel;
+            let sardinePath = findSardine();
+            if (!sardinePath) {
+                vscode.window.showInformationMessage(`Can't start without Sardine path.`);
+                reject(new Error("Sardine path not defined"));
+                return;
+            }
+
+            sardineProc = spawn(sardinePath, [], {
+                env: { 
+                    ...process.env,
+                    PYTHONIOENCODING: "utf-8",
+                }
+            });
+
+            sardineProc.on("error", (err) => {
+                vscode.window.showErrorMessage(`Sardine error: ${err.message}`);
+                reject(err);
+            });
+
+            sardineProc.stdout?.on("data", (data) => {
+                // You might want to check the data to ensure the process has started correctly
+                resolve();
+            });
+
+            setupStatus();
+            setupOutput();
+            vscode.window.showInformationMessage(`Sardine has started with: ${sardinePath}`);
+        } catch (error) {
+            reject(error);
+        }
+    });
 }
 
 function printFeedback(s: string) {
@@ -195,20 +221,39 @@ function selectCursorsContexts(editor: TextEditor) {
   });
 }
 
-function send(editor: TextEditor) {
-  selectCursorsContexts(editor);
-  sendSelections(editor);
+async function send(editor: TextEditor) {
+    if (!sardineProc || sardineProc.killed) {
+        console.log('Sardine is not running, starting it...')
+        await start(editor);
+        console.log('Sardine started.')
+    }
+    selectCursorsContexts(editor);
+    await sendSelections(editor);
 }
 
-function sendSelections(editor: TextEditor) {
-  for (const s of editor.selections) {
-    let t = editor.document.getText(s);
-    printFeedback(">>> " + t);
-    sardineProc.stdin?.write(t + "\n\n");
-  }
-    editor.selections = editor.selections.map(
-    (s) => new Selection(s.active, s.active)
-  );
+async function sendSelections(editor: TextEditor) {
+    for (const s of editor.selections) {
+        let t = editor.document.getText(s);
+        try {
+            // Check if sardineProc and sardineProc.stdin are not null or undefined.
+            if (!sardineProc || !sardineProc.stdin) {
+                throw new Error("Sardine process is not running.");
+            }
+
+            printFeedback(">>> " + t);
+            sardineProc.stdin?.write(t + "\n\n");
+
+            editor.selections = editor.selections.map(
+                (s) => new Selection(s.active, s.active)
+            );
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage(`Error sending selection: ${error.message}`);
+            } else {
+                vscode.window.showErrorMessage(`An unexpected error occurred while sending selections.`);
+            }
+        }
+    }
 }
 
 vscode.commands.registerCommand("extension.openSardineDocs", () => {
