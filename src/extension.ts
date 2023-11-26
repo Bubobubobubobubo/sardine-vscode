@@ -7,6 +7,7 @@ import {
   OutputChannel,
 } from "vscode";
 import { spawn, ChildProcess } from "child_process";
+import { stripAnsi } from "./ansi";
 import * as util from "util";
 import * as child_process from "child_process";
 
@@ -14,34 +15,6 @@ enum FeedbackStyle {
   outputChannel,
   infomationMessage,
 }
-
-const ansiRegex = ({ onlyFirst = false } = {}) => {
-  /**
-   * Returns a regular expression that matches ANSI escape codes.
-   * @param onlyFirst - If true, the regular expression will only match the first occurrence. Default is false.
-   * @returns A regular expression object.
-   */
-  const pattern = [
-    "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)",
-    "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))",
-  ].join("|");
-  return new RegExp(pattern, onlyFirst ? undefined : "g");
-};
-
-const stripAnsi = (expression: string) => {
-  /**
-   * Removes ANSI escape codes from a given string.
-   *
-   * @param expression - The string to remove ANSI escape codes from.
-   * @returns The string without ANSI escape codes.
-   * @throws TypeError if the input is not a string.
-   */
-  if (typeof expression !== "string") {
-    throw new TypeError(`Expected a \`string\`, got \`${typeof expression}\``);
-  }
-  const regex = ansiRegex();
-  return expression.replace(regex, "");
-};
 
 let sardineProc: ChildProcess;
 let sardineStatus: StatusBarItem;
@@ -66,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   for (const [key, func] of commands)
     context.subscriptions.push(
-      vscode.commands.registerTextEditorCommand(key, func),
+      vscode.commands.registerTextEditorCommand(key, func)
     );
 }
 
@@ -93,43 +66,43 @@ function startProcess(command: string) {
   sardineProc.on("close", handleOnClose);
 }
 
-function silence() {
+const silence = () => {
   /**
    * Writes "silence()" to the standard input of the sardineProc.
    */
   sardineProc.stdin!.write("silence()\n\n");
-}
+};
 
-function panic() {
+const panic = () => {
   /**
    * Writes "panic()" to the standard input of the sardineProc.
    */
   sardineProc.stdin!.write("panic()\n\n");
-}
+};
 
-function setupStatus() {
+const setupStatus = () => {
   /**
    * Sets up the status bar item for the Sardine plugin.
    */
   sardineStatus = vscode.window.createStatusBarItem(
     StatusBarAlignment.Left,
-    10,
+    10
   );
   sardineStatus.text = "$(triangle-right) Sardine";
   sardineStatus.tooltip = "Click to open Sardine documentation";
   sardineStatus.command = "extension.openSardineDocs";
   sardineStatus.show();
-}
+};
 
-function setupOutput() {
+const setupOutput = () => {
   /**
    * Sets up the output channel for Sardine.
    */
   sardineOutput = vscode.window.createOutputChannel("Sardine");
   sardineOutput.show(true);
-}
+};
 
-function setOutputHook(key: string, handler: (_: string) => any) {
+const setOutputHook = (key: string, handler: (_: string) => any) => {
   /**
    * Sets an output hook for a specific key.
    *
@@ -140,18 +113,18 @@ function setOutputHook(key: string, handler: (_: string) => any) {
     handler(s.slice(key.length));
     outputHooks.delete(key);
   });
-}
+};
 
-function appendSardinePath(path: string): string {
+const appendSardinePath = (path: string): string => {
   /**
    * Appends "/sardine" to the given path if it doesn't already end with it.
    * @param path - The path to append "/sardine" to.
    * @returns The modified path.
    */
   return path.endsWith("/sardine") ? path : path + "/sardine";
-}
+};
 
-function findSardine(): string | undefined {
+const findSardine = (): string | undefined => {
   /**
    * Finds the path to the Sardine executable.
    *
@@ -178,12 +151,12 @@ function findSardine(): string | undefined {
     }
   }
   vscode.window.showErrorMessage(
-    "Please enter a valid Sardine Path in configuration and restart VSCode",
+    "Please enter a valid Sardine Path in configuration and restart VSCode"
   );
   return undefined;
-}
+};
 
-function start(editor: TextEditor): Promise<void> {
+const start = (editor: TextEditor): Promise<void> => {
   /**
    * Starts the Sardine extension by initializing the necessary components and starting the Sardine process.
    *
@@ -205,7 +178,7 @@ function start(editor: TextEditor): Promise<void> {
       let sardinePath = findSardine();
       if (!sardinePath) {
         vscode.window.showInformationMessage(
-          `Can't start without Sardine path.`,
+          `Can't start without Sardine path.`
         );
         reject(new Error("Sardine path not defined"));
         return;
@@ -232,23 +205,22 @@ function start(editor: TextEditor): Promise<void> {
       });
 
       sardineProc.stdout?.on("data", (data) => {
-        // You might want to check the data to ensure the process has started correctly
-        console.log(data);
+        printFeedback(data.toString());
         resolve();
       });
 
       setupStatus();
       setupOutput();
       vscode.window.showInformationMessage(
-        `Sardine has started with: ${sardinePath}`,
+        `Sardine has started with: ${sardinePath}`
       );
     } catch (error) {
       reject(error);
     }
   });
-}
+};
 
-function printFeedback(s: string) {
+const printFeedback = (s: string) => {
   /**
    * Prints the feedback message.
    *
@@ -263,19 +235,19 @@ function printFeedback(s: string) {
       sardineOutput.appendLine(strippedString);
       break;
   }
-}
+};
 
-function handleOutputData(data: any) {
+const handleOutputData = (data: any) => {
   const s: string = data.toString();
   for (const [k, f] of outputHooks) if (s.startsWith(k)) return f(s);
   printFeedback(s);
-}
+};
 
-function handleErrorData(data: any) {
+const handleErrorData = (data: any) => {
   printFeedback(data.toString());
-}
+};
 
-function handleOnClose(code: number) {
+const handleOnClose = (code: number) => {
   /**
    * Handles the onClose event of the Sardine plugin.
    * @param code The exit code of Sardine.
@@ -287,13 +259,13 @@ function handleOnClose(code: number) {
     vscode.window.showInformationMessage(`Sardine has stopped.`);
   }
   sardineStatus?.dispose();
-}
+};
 
-function stop() {
+const stop = () => {
   sardineProc.kill();
-}
+};
 
-function selectCursorsContexts(editor: TextEditor) {
+const selectCursorsContexts = (editor: TextEditor) => {
   /**
    * Modifies the selections in the editor to include additional context lines.
    * The context lines are determined by including non-empty and non-whitespace
@@ -310,9 +282,9 @@ function selectCursorsContexts(editor: TextEditor) {
       r = r.union(d.lineAt(l).range);
     return new Selection(r.start, r.end);
   });
-}
+};
 
-async function send(editor: TextEditor) {
+const send = async (editor: TextEditor) => {
   /**
    * Sends the selected text to Sardine for processing.
    * If Sardine is not running, it will be started first.
@@ -325,9 +297,9 @@ async function send(editor: TextEditor) {
   }
   selectCursorsContexts(editor);
   await sendSelections(editor);
-}
+};
 
-async function sendSelections(editor: TextEditor) {
+const sendSelections = async (editor: TextEditor) => {
   /**
    * Sends the selected text from the editor to the Sardine process.
    *
@@ -344,27 +316,27 @@ async function sendSelections(editor: TextEditor) {
       sardineProc.stdin?.write(t + "\n\n");
 
       editor.selections = editor.selections.map(
-        (s) => new Selection(s.active, s.active),
+        (s) => new Selection(s.active, s.active)
       );
     } catch (error: unknown) {
       if (error instanceof Error) {
         vscode.window.showErrorMessage(
-          `Error sending selection: ${error.message}`,
+          `Error sending selection: ${error.message}`
         );
       } else {
         vscode.window.showErrorMessage(
-          `An unexpected error occurred while sending selections.`,
+          `An unexpected error occurred while sending selections.`
         );
       }
     }
   }
-}
+};
 
 vscode.commands.registerCommand("extension.openSardineDocs", () => {
   /**
    * Opens the Sardine documentation in the default browser.
    */
   vscode.env.openExternal(
-    vscode.Uri.parse("https://sardine.raphaelforment.fr"),
+    vscode.Uri.parse("https://sardine.raphaelforment.fr")
   );
 });
