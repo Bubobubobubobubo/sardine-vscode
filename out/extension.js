@@ -9,25 +9,29 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.activate = void 0;
+exports.deactivate = exports.activate = void 0;
 const vscode = require("vscode");
+const findSardine_1 = require("./findSardine");
 const vscode_1 = require("vscode");
 const child_process_1 = require("child_process");
 const ansi_1 = require("./ansi");
-const child_process = require("child_process");
+// Sardine CLI process
+let sardineProc;
+// Sardine Status bar
+let sardineStatus;
+// Sardine output channels
+let sardineOutput;
+// Styles
+let feedbackStyle;
+let outputHooks = new Map();
 var FeedbackStyle;
 (function (FeedbackStyle) {
     FeedbackStyle[FeedbackStyle["outputChannel"] = 0] = "outputChannel";
     FeedbackStyle[FeedbackStyle["infomationMessage"] = 1] = "infomationMessage";
 })(FeedbackStyle || (FeedbackStyle = {}));
-let sardineProc;
-let sardineStatus;
-let sardineOutput;
-let feedbackStyle;
-let outputHooks = new Map();
 function activate(context) {
     /**
-     * Activates the extension.
+     * Activates the extension (entry point).
      *
      * @param context The extension context.
      */
@@ -38,28 +42,24 @@ function activate(context) {
         ["sardine.panic", panic],
         ["sardine.sendSelections", sendSelections],
         ["sardine.stop", stop],
+        ["sardine.help", help],
     ]);
     for (const [key, func] of commands)
         context.subscriptions.push(vscode.commands.registerTextEditorCommand(key, func));
 }
 exports.activate = activate;
-function startProcess(command) {
-    var _a, _b;
+function deactivate() {
     /**
-     * Starts a process with the given command.
-     * @param command - The command to execute.
+     * Deactivates the extension.
      */
-    sardineProc = (0, child_process_1.spawn)(command, [], {
-        env: Object.assign(Object.assign({}, process.env), { PYTHONIOENCODING: "utf-8", sclang: vscode.workspace
-                .getConfiguration("sardine")
-                .get("sclangPath") || "sclang" }),
-    });
-    sardineProc.on("error", (err) => {
-        vscode.window.showErrorMessage(`Sardine error: ${err.message}`);
-    });
-    (_a = sardineProc.stdout) === null || _a === void 0 ? void 0 : _a.on("data", handleOutputData);
-    (_b = sardineProc.stderr) === null || _b === void 0 ? void 0 : _b.on("data", handleErrorData);
-    sardineProc.on("close", handleOnClose);
+    stop();
+}
+exports.deactivate = deactivate;
+function help() {
+    /**
+     * Opens the Sardine documentation in the default browser.
+    */
+    vscode.env.openExternal(vscode.Uri.parse("https://sardine.raphaelforment.fr"));
 }
 const silence = () => {
     /**
@@ -90,75 +90,35 @@ const setupOutput = () => {
     sardineOutput = vscode.window.createOutputChannel("Sardine");
     sardineOutput.show(true);
 };
-const setOutputHook = (key, handler) => {
-    /**
-     * Sets an output hook for a specific key.
-     *
-     * @param key - The key associated with the output hook.
-     * @param handler - The handler function to be called when the output hook is triggered.
-     */
-    outputHooks === null || outputHooks === void 0 ? void 0 : outputHooks.set(key, (s) => {
-        handler(s.slice(key.length));
-        outputHooks.delete(key);
-    });
-};
-const appendSardinePath = (path) => {
-    /**
-     * Appends "/sardine" to the given path if it doesn't already end with it.
-     * @param path - The path to append "/sardine" to.
-     * @returns The modified path.
-     */
-    return path.endsWith("/sardine") ? path : path + "/sardine";
-};
-const findSardine = () => {
-    /**
-     * Finds the path to the Sardine executable.
-     *
-     * @returns The path to the Sardine executable, or undefined if not found.
-     */
-    const config = vscode.workspace.getConfiguration("sardine");
-    const sardinePath = config.get("sardinePath");
-    if (sardinePath) {
-        return appendSardinePath(sardinePath);
-    }
-    if (process.platform === "linux" || process.platform === "darwin") {
-        try {
-            const whichSardine = child_process
-                .execSync("which sardine")
-                .toString()
-                .trim();
-            if (whichSardine) {
-                return whichSardine;
-            }
-        }
-        catch (error) {
-            if (sardinePath)
-                return appendSardinePath(sardinePath);
-        }
-    }
-    vscode.window.showErrorMessage("Please enter a valid Sardine Path in configuration and restart VSCode");
-    return undefined;
-};
 const start = (editor) => {
     /**
-     * Starts the Sardine extension by initializing the necessary components and starting the Sardine process.
+     * Starts the Sardine extension.
      *
      * @param editor The TextEditor instance representing the active editor.
-     * @returns A Promise that resolves when the Sardine extension has started successfully, or rejects with an
-     *  error if there was an issue starting the extension.
+     * @returns A Promise that resolves when the Sardine extension has started
+     * successfully, or rejects with an error if there was an issue starting
+     * the extension.
      */
     return new Promise((resolve, reject) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a;
+        var _a, _b;
+        // Kill any process named "sardine" that is running
+        (0, child_process_1.exec)('pkill -f "python.*sardine"', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`exec error: ${error}`);
+                return;
+            }
+            console.log(`stdout: ${stdout}`);
+            console.error(`stderr: ${stderr}`);
+        });
         try {
             if (sardineProc && !sardineProc.killed) {
-                resolve();
-                return;
+                sardineProc.kill();
+                // Kill any process named "sardine" that is running
             }
             let config = vscode.workspace.getConfiguration("sardine");
             vscode.languages.setTextDocumentLanguage(editor.document, "python");
-            feedbackStyle =
-                config.get("feedbackStyle") || FeedbackStyle.outputChannel;
-            let sardinePath = findSardine();
+            feedbackStyle = config.get("feedbackStyle") || FeedbackStyle.outputChannel;
+            let sardinePath = (0, findSardine_1.findSardine)();
             if (!sardinePath) {
                 vscode.window.showInformationMessage(`Can't start without Sardine path.`);
                 reject(new Error("Sardine path not defined"));
@@ -167,10 +127,12 @@ const start = (editor) => {
             sardineProc = (0, child_process_1.spawn)(sardinePath, [], {
                 env: Object.assign(Object.assign({}, process.env), { PYTHONIOENCODING: "utf-8" }),
             });
+            let sardineProcID = sardineProc.pid;
             sardineProc.on("spawn", () => {
                 console.log("Sardine process started.");
             });
             sardineProc.on("exit", (code) => {
+                sardineProc.kill("SIGINT");
                 console.log(`Sardine process exited with code ${code}`);
             });
             sardineProc.on("error", (err) => {
@@ -178,6 +140,10 @@ const start = (editor) => {
                 reject(err);
             });
             (_a = sardineProc.stdout) === null || _a === void 0 ? void 0 : _a.on("data", (data) => {
+                printFeedback(data.toString());
+                resolve();
+            });
+            (_b = sardineProc.stderr) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
                 printFeedback(data.toString());
                 resolve();
             });
@@ -190,31 +156,21 @@ const start = (editor) => {
         }
     }));
 };
-const printFeedback = (s) => {
+const printFeedback = (message) => {
     /**
-     * Prints the feedback message.
-     *
-     * @param s - The feedback message to be printed.
+     * Prints the feedback message with type indication.
+     * @param message - The feedback message to be printed.
+     * @param type - The type of the message ('stdout' or 'stderr').
      */
-    const strippedString = (0, ansi_1.stripAnsi)(s);
+    const strippedMessage = (0, ansi_1.stripAnsi)(message);
     switch (feedbackStyle) {
         case FeedbackStyle.infomationMessage:
-            vscode.window.showInformationMessage(strippedString);
+            vscode.window.showInformationMessage(strippedMessage);
             break;
         default:
-            sardineOutput.appendLine(strippedString);
+            sardineOutput.appendLine(strippedMessage);
             break;
     }
-};
-const handleOutputData = (data) => {
-    const s = data.toString();
-    for (const [k, f] of outputHooks)
-        if (s.startsWith(k))
-            return f(s);
-    printFeedback(s);
-};
-const handleErrorData = (data) => {
-    printFeedback(data.toString());
 };
 const handleOnClose = (code) => {
     /**
@@ -230,7 +186,20 @@ const handleOnClose = (code) => {
     sardineStatus === null || sardineStatus === void 0 ? void 0 : sardineStatus.dispose();
 };
 const stop = () => {
-    sardineProc.kill();
+    // Kill the Sardine process
+    if (sardineProc && !sardineProc.killed) {
+        sardineProc.kill();
+    }
+    // Dispose the status bar item
+    if (sardineStatus) {
+        sardineStatus.dispose();
+    }
+    // Clear the output channel
+    if (sardineOutput) {
+        sardineOutput.clear();
+    }
+    // Show a message to the user
+    vscode.window.showInformationMessage('Sardine has stopped.');
 };
 const selectCursorsContexts = (editor) => {
     /**

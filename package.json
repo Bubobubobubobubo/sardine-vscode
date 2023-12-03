@@ -3,7 +3,7 @@
   "displayName": "Sardine",
   "publisher": "BuboBubo",
   "description": "Extension for Sardine",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -26,6 +26,11 @@
         "command": "sardine.start",
         "title": "Sardine: Start"
       },
+      {
+        "command": "sardine.help",
+        "title": "Sardine: Open Documentation"
+      },
+
       {
         "command": "sardine.silence",
         "title": "Sardine: Silence"

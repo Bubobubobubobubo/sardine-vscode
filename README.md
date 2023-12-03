@@ -1,10 +1,12 @@
 # Sardine VSCode extension
 
-This is a Visual Studio Code extension for [Sardine](https://sardine.raphaelforment.fr). This extension is largely based on [vscode-foxdot](https://github.com/yasuyuky/vscode-foxdot). The extension is capable of:
+This is a Visual Studio Code extension for [Sardine](https://sardine.raphaelforment.fr). Consider it as a work in progress. This extension can:
 
-- starting `sardine`.
-- sending lines or blocks of code to the interpreter.
-- shutting down itself (?)
+- start/stop a `sardine` live coding session.
+- send line(s) to the interpreter easily.
+- display logs and errors.
+
+Some keys are configured by default but use your favorite keybindings and be mindful of possible conflicts with other packages/extensions.
 
 ## Commands
 
@@ -17,12 +19,7 @@ This is a Visual Studio Code extension for [Sardine](https://sardine.raphaelform
 
 ## Requirements
 
-You will need to install [Sardine](https://sardine.raphaelforment.fr) in order to make it work. Please note that `sardine` needs to be on your $PATH for the extension to work.
-You will have to make it available if it is not. It should be if you have installed Sardine correctly.
-
-## Settings
-
-TODO
+To use this extension, you will need to install [Sardine](https://sardine.raphaelforment.fr) first. The `sardine` program needs to be on your `$PATH`. This is the condition for VSCode to be able to find it.
 
 ## Credits
 
